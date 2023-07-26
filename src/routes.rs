@@ -1,4 +1,8 @@
-use actix_web::{get, HttpResponse, Responder, post};
+use actix_web::{get, HttpResponse, Responder, post, web};
+
+use redis::Commands;
+
+use crate::AppState;
 
 #[get("/")]
 pub async fn homepage() -> impl Responder {
@@ -9,11 +13,18 @@ pub async fn homepage() -> impl Responder {
 }
 
 #[get("/messages")]
-pub async fn get_messages() -> impl Responder {
-  HttpResponse::Ok().body("messages")
+pub async fn get_messages(redis_client: web::Data<AppState>) -> impl Responder {
+  let mut conn = redis_client.redis_client.get_connection().unwrap();  
+  let messages: Vec<String> = conn.lrange("messages", 0, -1).unwrap_or_else(|_| vec![String::from("Messages not found")]);
+
+  dbg!(messages.clone());
+
+ HttpResponse::Ok().json(messages)
 }
 
 #[post("/message")]
-pub async fn set_message(_message: String) -> impl Responder {
-  HttpResponse::Ok().body("messages")
+pub async fn set_message(redis_client: web::Data<AppState>, _message: String) -> impl Responder {
+  let mut _conn = redis_client.redis_client.get_connection().unwrap();
+  let _: () = _conn.lpush("messages", _message).unwrap();
+  HttpResponse::Ok()
 }

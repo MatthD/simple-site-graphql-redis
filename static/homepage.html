@@ -6,6 +6,52 @@
     <title>Test rust</title>
   </head>
   <body>
-    <h1>This is my main page</h1>
+    <h1 style="color: red; text-align: center">This is my main page</h1>
+    <h1 style="color: green; text-align: center">
+      List of message in the tchat
+    </h1>
+    <form onsubmit="addAMessage(event)" id="addAMessageForm">
+      <div>
+        <label for="example">Send a new message...</label>
+        <input id="example" type="text" name="message" />
+      </div>
+      <div>
+        <input type="submit" value="Send" />
+      </div>
+    </form>
+    <ul id="messages"></ul>
   </body>
+  <script>
+    // Script to get messages
+    let messagesInit = [];
+    let messagesListDom = document.getElementById("messages");
+    function getMessages() {
+      fetch("/messages")
+        .then((res) => res.json())
+        .then((messages) => {
+          messagesInit.push(...messages);
+          const newListElements = messages.map((message) => {
+            const currentLi = document.createElement("li");
+            currentLi.textContent = message;
+            return currentLi;
+          });
+          messagesListDom.replaceChildren(...newListElements);
+        })
+        .catch(console.error);
+    }
+
+    getMessages();
+  </script>
+  <script>
+    // Script to send a new message
+    async function addAMessage(e) {
+      e.preventDefault();
+      const form = new FormData(document.getElementById("addAMessageForm"));
+      const messageAdded = await fetch("/message", {
+        method: "POST",
+        body: form.get("message"),
+      });
+      getMessages();
+    }
+  </script>
 </html>
